@@ -1,0 +1,6 @@
+numpy==1.26.2
+scipy==1.11.4
+pygmsh==7.1.17
+matplotlib==3.8.2
+pymunk==6.6.0
+tqdm==4.66.1
