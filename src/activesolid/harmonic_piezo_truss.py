@@ -169,7 +169,9 @@ class HarmonicPiezoTruss(Truss):
         #
         self.extDisps *= A * np.exp(1j * angle / 180 * np.pi)
 
-    def plot_extDeform(self, Disps, angle):
+    def plot_deform(self, Disps, angle=None, c='orange', title: str = "Deformation"):
+        if angle is None:
+            angle = np.mean(np.angle(Disps, deg=True))
         Disps = Disps * np.exp(-1j * angle / 180 * np.pi)
         s = np.nanmax(np.linalg.norm(np.abs(Disps), axis=1))
         #
@@ -183,8 +185,8 @@ class HarmonicPiezoTruss(Truss):
                      color="green", linewidth=1.5 * __k / self.k, zorder=1)
         plt.plot(self.nodes[:, 0], self.nodes[:, 1], "o", markersize=4, zorder=1)
         plt.quiver(self.nodes[:, 0], self.nodes[:, 1], Disps[:, 0].real, Disps[:, 1].real,
-                   color='orange', scale=8 * s, zorder=2, linewidth=0.5, edgecolor='orange')
-        plt.title("External Deformation")
+                   color=c, scale=8 * s, zorder=2, linewidth=0.5, edgecolor=c)
+        plt.title(title)
         circ = plt.Circle((-0.57, -0.6), 0.07, color='grey', fill=False)
         plt.gcf().gca().add_artist(circ)
         plt.quiver(-0.57, -0.6, 0.07 * np.cos(angle), 0.07 * np.sin(angle), color='red', zorder=2, linewidth=1, )
@@ -193,7 +195,7 @@ class HarmonicPiezoTruss(Truss):
         if self.path is not None:
             if not os.path.exists(self.path):
                 os.makedirs(self.path)
-            plt.savefig(self.path + "extDeform.svg", dpi=300)
+            plt.savefig(self.path + title+".svg", dpi=300)
 
     def plot_harmVar(self, var: np.ndarray, title: str = None, cm: str = 'RdBu_r'):
         """
@@ -248,7 +250,12 @@ class HarmonicPiezoTruss(Truss):
         ===================
         :return:
         """
-        self.plot_harmVar(var=self.loss, title="Loss")
+        plt.figure(figsize=(10 / 2.54, 10 / 2.54))
+        plt.title("Loss")
+        plt.semilogy(self.loss)
+        if not os.path.exists(self.path):
+            os.makedirs(self.path)
+        plt.savefig(self.path + "loss.svg", dpi=300)
 
     def save_data(self):
         """
