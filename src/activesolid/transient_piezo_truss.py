@@ -44,11 +44,13 @@ class TransientPiezoTruss(Truss):
         self.G = np.ones((self.elements.shape[0],)) * gamma
         self.C = np.ones((self.elements.shape[0],)) * capacitance
         #
-        self.extVoltage = np.vectorize(lambda t: np.zeros((self.nodes.shape[0], 2, 1)))
-        self.extForces = np.vectorize(lambda t: np.zeros((self.nodes.shape[0], 2, 1)))
-        self.extDisps = np.vectorize(lambda t: np.zeros((self.nodes.shape[0], 2, 1))*np.nan)  # nan means free
-        self.extVel = np.vectorize(lambda t: np.zeros((self.nodes.shape[0], 2, 1)))
-        self.extAccel = np.vectorize(lambda t: np.zeros((self.nodes.shape[0], 2, 1)))
+        self.extVoltage = np.zeros((self.elements.shape[0], len(self.Steps)))
+        self.extForces = np.zeros((self.nodes.shape[0], 2, len(self.Steps)))
+        self.extDisps = np.zeros((self.nodes.shape[0], 2, len(self.Steps))) * np.nan  # nan means free
+        self.extVel = np.zeros((self.nodes.shape[0], 2, len(self.Steps)))
+        self.extAccel = np.zeros((self.nodes.shape[0], 2, len(self.Steps)))
+
+        print(self.nodes)
 
     def add_volForce(self, voltage: list = None, reset: bool = False, seed: int = 0):
         """
@@ -103,15 +105,12 @@ class TransientPiezoTruss(Truss):
         :return:
         """
         if reset:
-            self.extForces = np.vectorize(lambda t: np.zeros((self.nodes.shape[0], 2, 1)))
+            self.extForces *= 0
         if nodes is not None:
-            def __extForces(t):
-                __calForces = np.zeros((self.nodes.shape[0], 2, 1))
-                __calForces[nodes] = forces[:, :, 0, :] @ np.sin(self.omega[:, np.newaxis] * t)
-                __calForces[nodes] += forces[:, :, 1, :] @ np.cos(self.omega[:, np.newaxis] * t)
-                return __calForces
-
-            self.extForces = np.vectorize(__extForces)
+            __forces = np.zeros((nodes.shape[0], 2, len(self.Steps)))
+            __forces = forces[:, :, 0, :] @ np.sin(self.omega[:, np.newaxis] * self.Steps)
+            __forces += forces[:, :, 1, :] @ np.cos(self.omega[:, np.newaxis] * self.Steps)
+            self.extForces[nodes] = __forces
 
     def add_extTemporalDisps(self, nodes: np.ndarray = None, disps: np.ndarray = None, reset: bool = False):
         """
@@ -240,7 +239,7 @@ def test_transient_piezo_truss():
     """
     # Create a static_piezo_truss object
     static_piezo_truss = TransientPiezoTruss(node_num_4_each_edge=2, path='./Transient_Piezo_Truss',
-                                             freq=[10], tspan=[0, 10])
+                                             freq=[0], tspan=[0, 10])
     # # Add voltage to the static_piezo_truss structure
     # static_piezo_truss.add_volForce(voltage=[[1, 1, 0], [0, 0, 0]], seed=1, reset=True)
     # print("static_piezo_truss.extVoltage = \n", static_piezo_truss.extVoltage)
